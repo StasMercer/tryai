@@ -15,6 +15,7 @@ function isQuery(obj: any): obj is queryParams{
 }
 
 export default async (req, res) => {
+
     let errors = [];
     //at first check if query has proper params
     if(isQuery(req.query)){

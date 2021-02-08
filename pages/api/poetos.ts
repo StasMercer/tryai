@@ -1,12 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import * as tf from '@tensorflow/tfjs-node';
 import { IncomingMessage } from 'http';
-
-export default async (req, res) => {
-    res.statusCode = 200;
-    res.json({data:"ok"})
-}
+import { expandDims, LayersModel, loadLayersModel, squeeze, div, multinomial } from '@tensorflow/tfjs-node';
 
 type queryParams = {
     seed: string,
@@ -19,32 +14,32 @@ function isQuery(obj: any): obj is queryParams{
     return true;
 }
 
-// export default async (req, res) => {
-//     let errors = [];
-//     //at first check if query has proper params
-//     if(isQuery(req.query)){
+export default async (req, res) => {
+    let errors = [];
+    //at first check if query has proper params
+    if(isQuery(req.query)){
 
-//         let {seed, numGen}: queryParams = req.query;
+        let {seed, numGen}: queryParams = req.query;
         
-//         if(seed.length > 100) errors.push('seed length too big');
-//         if(!isNaN(+numGen) && (+numGen > 500 || +numGen < 100)) errors.push('invalid numGen');
-//     }else{
-//         errors.push('invalid request params')
-//     }
+        if(seed.length > 100) errors.push('seed length too big');
+        if(!isNaN(+numGen) && (+numGen > 500 || +numGen < 100)) errors.push('invalid numGen');
+    }else{
+        errors.push('invalid request params')
+    }
 
-//     //if no errors found handle a request
-//     if(errors.length === 0){
-//         res.statusCode = 200;
-//         let modelPath =  'file://models/poetos_model/model.json'
-//         const model = await tf.loadLayersModel(modelPath);
-//         let generated = await generateText(model, req.query.seed, +req.query.numGen);
-//         res.json({ data: generated })
-//     }else{
-//         res.statusCode = 400;
-//         res.json(errors);
-//     }
+    //if no errors found handle a request
+    if(errors.length === 0){
+        res.statusCode = 200;
+        let modelPath =  'file://models/poetos_model/model.json'
+        const model = await loadLayersModel(modelPath);
+        let generated = await generateText(model, req.query.seed, +req.query.numGen);
+        res.json({ data: generated })
+    }else{
+        res.statusCode = 400;
+        res.json(errors);
+    }
 
-// }
+}
 
 const idx2char = ['\n', ' ', '!', '"', '#', '&', "'", '(', ')', '*', ',', '-', '.',
  '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '>', '?',
@@ -67,12 +62,12 @@ idx2char.forEach((e, index) =>{
 //fucking python converted function
 //I'm also wandering how it is fucking working
 //new tool learned - ts-ignore
-const generateText = async (model: tf.LayersModel, startString: string, numGen: number) =>{
+const generateText = async (model: LayersModel, startString: string, numGen: number) =>{
     
     let numGenerate = numGen;
     let inputEval = [];
     startString.split('').forEach((val, index) => inputEval.push(char2idx[val]));
-    let inputExtended = tf.expandDims(inputEval, 0);
+    let inputExtended = expandDims(inputEval, 0);
    
     let textGenerated = [];
     const temperature = 0.2;
@@ -82,17 +77,17 @@ const generateText = async (model: tf.LayersModel, startString: string, numGen: 
     for(let i = 0; i< numGenerate; i++){
         let predictions = model.predict(inputExtended);
         //@ts-ignore
-        predictions = tf.squeeze(predictions, 0);
+        predictions = squeeze(predictions, 0);
         //@ts-ignore
-        predictions = tf.div(predictions, temperature);
+        predictions = div(predictions, temperature);
 
         
         //@ts-ignore
-        let predictedId = tf.multinomial(predictions, 1);
+        let predictedId = multinomial(predictions, 1);
 
         let predictedArray = await predictedId.array();
         let idAsNum = predictedArray[predictedArray.length-1][0];
-        inputExtended = tf.expandDims([idAsNum], 0);
+        inputExtended = expandDims([idAsNum], 0);
         textGenerated.push(idx2char[idAsNum]);
   
     }

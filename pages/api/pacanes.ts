@@ -1,8 +1,16 @@
 import fs from 'fs'
 import path from 'path'
-import * as tf from '@tensorflow/tfjs-node';
 import { IncomingMessage } from 'http';
+import axios from 'axios';
+import loadTf from 'tfjs-node-lambda';
 
+const response = await axios.get(
+  'https://github.com/jlarmstrongiv/tfjs-node-lambda/releases/download/v1.5.0/nodejs12.x-tf2.7.0.br',
+  { responseType: 'arraybuffer' },
+);
+
+const readStream = fs.createReadStream(response.data);
+const tf: typeof import('@tensorflow/tfjs') = await loadTf(readStream);
 
 type queryParams = {
     seed: string,
@@ -75,7 +83,7 @@ idx2char.forEach((e, index) =>{
 //fucking python converted function
 //I'm also wandering how it is fucking working
 //new tool learned - ts-ignore
-const generateText = async (model: tf.LayersModel, startString: string, numGen: number) =>{
+const generateText = async (model: any, startString: string, numGen: number) =>{
 
     let numGenerate = numGen;
     let inputEval = [];

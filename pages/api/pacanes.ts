@@ -4,14 +4,6 @@ import { IncomingMessage } from 'http';
 import axios from 'axios';
 import loadTf from 'tfjs-node-lambda';
 
-const response = await axios.get(
-  'https://github.com/jlarmstrongiv/tfjs-node-lambda/releases/download/v1.5.0/nodejs12.x-tf2.7.0.br',
-  { responseType: 'arraybuffer' },
-);
-
-const readStream = fs.createReadStream(response.data);
-const tf: typeof import('@tensorflow/tfjs') = await loadTf(readStream);
-
 type queryParams = {
     seed: string,
     numGen: string
@@ -24,7 +16,13 @@ function isQuery(obj: any): obj is queryParams{
 }
 
 export default async (req, res) => {
-
+    const response = await axios.get(
+        'https://github.com/jlarmstrongiv/tfjs-node-lambda/releases/download/v1.5.0/nodejs12.x-tf2.7.0.br',
+        { responseType: 'arraybuffer' },
+      );
+      
+      const readStream = fs.createReadStream(response.data);
+      const tf: typeof import('@tensorflow/tfjs') = await loadTf(readStream);
     let errors = [];
     //at first check if query has proper params
     if(isQuery(req.query)){
@@ -42,7 +40,7 @@ export default async (req, res) => {
         res.statusCode = 200;
         let modelPath =  'file://models/pacanes_model/model.json'
         const model = await tf.loadLayersModel(modelPath);
-        let generated = await generateText(model, req.query.seed, +req.query.numGen);
+        let generated = await generateText(tf, model, req.query.seed, +req.query.numGen);
         res.json({ data: generated })
     }else{
         res.statusCode = 400;
@@ -83,7 +81,7 @@ idx2char.forEach((e, index) =>{
 //fucking python converted function
 //I'm also wandering how it is fucking working
 //new tool learned - ts-ignore
-const generateText = async (model: any, startString: string, numGen: number) =>{
+const generateText = async (tf, model: any, startString: string, numGen: number) =>{
 
     let numGenerate = numGen;
     let inputEval = [];

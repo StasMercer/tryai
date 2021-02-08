@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@next/bundle-analyzer": "^10.0.6",
     "@tensorflow/tfjs-node": "^3.0.0",
     "autoprefixer": "^10.2.3",
     "axios": "^0.21.1",
@@ -17,8 +18,7 @@
     "react-dom": "17.0.1",
     "react-icons": "^4.1.0",
     "react-spinners": "^0.10.4",
-    "sass": "^1.32.5",
-    "swr": "^0.4.1"
+    "sass": "^1.32.5"
   },
   "devDependencies": {
     "@types/node": "^14.14.22",
